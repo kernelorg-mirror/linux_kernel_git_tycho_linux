@@ -546,6 +546,22 @@ cleanup:
 	return ret;
 }
 
+static int test_clone_thread_pidfd(void)
+{
+	pid_t pid;
+	int flags = CLONE_THREAD | CLONE_VM | CLONE_SIGHAND | CLONE_PIDFD;
+	int pidfd;
+
+	pid = clone(thread_sleep, stack + STACK_SIZE, flags, NULL, &pidfd);
+	if (pid < 0) {
+		perror("clone");
+		return KSFT_FAIL;
+	}
+
+	close(pidfd);
+	return KSFT_PASS;
+}
+
 #define T(x) { x, #x }
 struct pidfd_non_tgl_test {
 	int (*fn)();
@@ -557,6 +573,7 @@ struct pidfd_non_tgl_test {
 	T(test_non_tgl_exit_poll),
 	T(test_non_tgl_waitid_exit),
 	T(test_non_tgl_waitid_exec),
+	T(test_clone_thread_pidfd),
 };
 #undef T
 
