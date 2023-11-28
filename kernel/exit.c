@@ -256,6 +256,17 @@ repeat:
 	write_lock_irq(&tasklist_lock);
 	ptrace_release_task(p);
 	thread_pid = get_pid(p->thread_pid);
+
+	/*
+	 * If we're not the leader, notify any waiters on our pidfds. Note that
+	 * we don't want to notify the leader until /everyone/ in the thread
+	 * group is dead, viz. the condition below.
+	 *
+	 * We have to do this here, since __exit_signal() will
+	 * __unhash_processes(), and break do_notify_pidfd()'s lookup.
+	 */
+	if (!thread_group_leader(p))
+		do_notify_pidfd(p);
 	__exit_signal(p);
 
 	/*
